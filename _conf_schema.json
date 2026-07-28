@@ -1,0 +1,44 @@
+{
+  "enable_keyword_zssm": {
+    "description": "是否启用“zssm”关键词自动触发",
+    "type": "bool",
+    "default": true,
+    "hint": "关闭后仅响应 /zssm 指令，不再通过纯文本“zssm”自动触发"
+  },
+  "llm_timeout_sec": {
+    "description": "LLM 调用超时（秒）",
+    "type": "int",
+    "default": 90,
+    "hint": "用于防止模型调用卡死导致无回复；范围建议 60-180"
+  },
+  "llm_retry_times": {
+    "description": "LLM 调用失败自动重试次数（含首次）",
+    "type": "int",
+    "default": 3,
+    "hint": "1=不重试；2=重试1次；建议范围 1-5"
+  },
+  "file_preview_max_size_kb": {
+    "description": "群文件内容预览允许的最大文件大小（KB）",
+    "type": "int",
+    "default": 100,
+    "hint": "超过该大小的群文件仅展示文件名和说明，不尝试读取内容片段"
+  },
+  "file_preview_exts": {
+    "description": "群文件内容预览的文本扩展名（逗号分隔）",
+    "type": "string",
+    "default": "txt,md,log,json,csv,ini,cfg,yml,yaml,py",
+    "hint": "仅对这些后缀的群文件尝试读取部分内容并交给 LLM 解释"
+  },
+  "provider_id": {
+    "description": "统一使用的 Provider ID（文本/图片/搜索共用）",
+    "type": "string",
+    "_special": "select_provider",
+    "hint": "留空则使用当前会话 Provider。图片场景若不支持视觉会自动回退。"
+  },
+  "search_mode": {
+    "description": "联网搜索模式",
+    "type": "string",
+    "default": "auto",
+    "options": ["自动", "关闭", "开启"]
+  }
+}
