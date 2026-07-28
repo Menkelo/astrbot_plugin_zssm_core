@@ -29,11 +29,17 @@
     "default": "txt,md,log,json,csv,ini,cfg,yml,yaml,py",
     "hint": "仅对这些后缀的群文件尝试读取部分内容并交给 LLM 解释"
   },
-  "provider_id": {
-    "description": "统一使用的 Provider ID（文本/图片/搜索共用）",
+  "provider_id_text": {
+    "description": "文本模型使用的 Provider ID",
     "type": "string",
     "_special": "select_provider",
-    "hint": "留空则使用当前会话 Provider。图片场景若不支持视觉会自动回退。"
+    "hint": "留空则使用当前会话 Provider。用于纯文本和搜索场景。"
+  },
+  "provider_id_image": {
+    "description": "图片/视觉模型使用的 Provider ID",
+    "type": "string",
+    "_special": "select_provider",
+    "hint": "留空则自动寻找支持视觉的 Provider。常用于 GPT-4o / Gemini 等多模态模型。"
   },
   "search_mode": {
     "description": "联网搜索模式",

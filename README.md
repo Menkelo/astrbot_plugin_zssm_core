@@ -34,8 +34,8 @@
   - 先展开所有节点，汇总文本与图片，作为「整段聊天记录」来解释。
 
 ### 多模型 / 多模态支持
-- 统一使用 `provider_id` 作为文本/图片/搜索 Provider。
-- 如果图片场景不支持视觉，会自动回退到具备图片能力的 Provider。
+- `provider_id_text` 选择文本/搜索场景的 Provider，`provider_id_image` 选择图片/视觉场景的 Provider。
+- 如果图片 Provider 不支持视觉，会自动回退到具备图片能力的 Provider。
 - 调用失败时带自动重试与回退逻辑。
 
 ---
@@ -77,7 +77,8 @@
 | `llm_retry_times` | int | `2` | LLM 调用失败自动重试次数（含首次）。1=不重试；2=重试1次。 |
 | `file_preview_max_size_kb` | int | `100` | 群文件内容预览允许的最大文件大小（KB）。超过该大小仅展示元信息。 |
 | `file_preview_exts` | string | `txt,md,log,...` | 群文件内容预览的文本扩展名（逗号分隔）。 |
-| `provider_id` | string | (空) | 统一使用的 Provider ID（文本/图片/搜索共用）。留空则使用当前会话 Provider。 |
+| `provider_id_text` | string | (空) | 文本/搜索模型使用的 Provider ID。留空则使用当前会话 Provider。 |
+| `provider_id_image` | string | (空) | 图片/视觉模型使用的 Provider ID。留空则自动寻找支持视觉的 Provider。 |
 | `search_mode` | string | `auto` | 联网搜索模式：auto / on / off。 |
 
 ---

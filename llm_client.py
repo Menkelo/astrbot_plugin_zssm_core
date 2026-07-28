@@ -7,7 +7,8 @@ from typing import Any, Callable, List, Optional
 
 LLM_TIMEOUT_SEC_KEY = "llm_timeout_sec"
 DEFAULT_LLM_TIMEOUT_SEC = 90
-PROVIDER_ID_KEY = "provider_id"
+PROVIDER_ID_TEXT_KEY = "provider_id_text"
+PROVIDER_ID_IMAGE_KEY = "provider_id_image"
 
 # 新增：重试次数
 LLM_RETRY_TIMES_KEY = "llm_retry_times"
@@ -89,7 +90,7 @@ class LLMClient:
                 continue
         return provider.__class__.__name__
 
-    def _get_provider_from_config(self, key: str = PROVIDER_ID_KEY) -> Optional[Any]:
+    def _get_provider_from_config(self, key: str = PROVIDER_ID_TEXT_KEY) -> Optional[Any]:
         if not self._get_config_provider:
             return None
         try:
@@ -97,13 +98,12 @@ class LLMClient:
         except Exception:
             return None
 
-    def select_primary_provider(self, *, session_provider: Any, image_urls: List[str]) -> Any:
-        """主调用 Provider（文本/图片统一走 provider_id，图片不支持时自动回退视觉模型）。"""
-        cfg = self._get_provider_from_config(PROVIDER_ID_KEY)
-        images_present = bool(image_urls)
+    def select_text_provider(self, *, session_provider: Any) -> Any:
+        cfg = self._get_provider_from_config(PROVIDER_ID_TEXT_KEY)
+        return cfg if cfg is not None else session_provider
 
-        if not images_present:
-            return cfg if cfg is not None else session_provider
+    def select_image_provider(self, *, session_provider: Any) -> Any:
+        cfg = self._get_provider_from_config(PROVIDER_ID_IMAGE_KEY)
 
         if cfg is not None and self.provider_supports_image(cfg):
             return cfg
@@ -122,8 +122,8 @@ class LLMClient:
         return cfg if cfg is not None else session_provider
 
     def select_search_provider(self, *, session_provider: Any) -> Any:
-        """搜索也走同一个 provider_id；未配置回退会话 Provider。"""
-        cfg = self._get_provider_from_config(PROVIDER_ID_KEY)
+        """搜索使用文本 Provider；未配置回退会话 Provider。"""
+        cfg = self._get_provider_from_config(PROVIDER_ID_TEXT_KEY)
         return cfg if cfg is not None else session_provider
 
     async def call_with_fallback(

@@ -38,7 +38,7 @@ KEYWORD_ZSSM_ENABLE_KEY = "enable_keyword_zssm"
 FILE_PREVIEW_EXTS_KEY = "file_preview_exts"
 FILE_PREVIEW_MAX_SIZE_KB_KEY = "file_preview_max_size_kb"
 SEARCH_MODE_KEY = "search_mode"  # auto / off / on
-PROVIDER_ID_KEY = "provider_id"
+PROVIDER_ID_TEXT_KEY = "provider_id_text"
 ZSSM_HANDLED_KEY = "zssm_handled"
 
 DEFAULT_FILE_PREVIEW_EXTS = "txt,md,log,json,csv,ini,cfg,yml,yaml,py"
@@ -486,10 +486,10 @@ class ZssmExplain(Star):
 
             if is_search:
                 call_provider = self._llm.select_search_provider(session_provider=provider)
+            elif image_urls:
+                call_provider = self._llm.select_image_provider(session_provider=provider)
             else:
-                call_provider = self._llm.select_primary_provider(
-                    session_provider=provider, image_urls=image_urls
-                )
+                call_provider = self._llm.select_text_provider(session_provider=provider)
 
             llm_resp = await self._llm.call_with_fallback(
                 primary=call_provider,
