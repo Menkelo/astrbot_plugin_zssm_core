@@ -213,7 +213,9 @@ class ZssmExplain(Star):
             clean = MULTI_SPACE_PATTERN.sub(" ", clean).strip()
             return clean, pid, False
 
-        return inline, None, False(self, event: AstrMessageEvent) -> str:
+        return inline, None, False
+
+    def _get_inline_content(self, event: AstrMessageEvent) -> str:
         chain = self._safe_get_chain(event)
         head = self._first_plain_head_text(chain)
         if head:
