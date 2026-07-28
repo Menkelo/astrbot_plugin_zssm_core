@@ -39,15 +39,8 @@
     "description": "图片/视觉模型使用的 Provider ID",
     "type": "string",
     "_special": "select_provider",
-      "hint": "留空则自动寻找支持视觉的 Provider。常用于 GPT-4o / Gemini 等多模态模型。"
-    },
-    "default_persona": {
-      "description": "默认角色（Persona）",
-      "type": "string",
-      "default": "",
-      "options": ["", "catgirl", "meme-expert"],
-      "hint": "留空使用默认中文助理。指令 -p catgirl 可临时覆盖。"
-    },
+    "hint": "留空则自动寻找支持视觉的 Provider。常用于 GPT-4o / Gemini 等多模态模型。"
+  },
   "search_mode": {
     "description": "联网搜索模式",
     "type": "string",

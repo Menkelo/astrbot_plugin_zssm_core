@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .persona import Persona
+from typing import List, Optional
 
 
 # === 默认提示词常量（集中管理，可供用户修改） ===
@@ -55,8 +52,6 @@ def build_user_prompt(text: Optional[str], images: List[str], concise: bool = Tr
     return tmpl.format(text=text or "", text_block=text_block)
 
 
-def build_system_prompt(persona: Optional["Persona"] = None) -> str:
-    """返回系统提示词，有 persona 时使用 persona 的提示词。"""
-    if persona is not None:
-        return persona.system_prompt
+def build_system_prompt() -> str:
+    """返回系统提示词（供 LLM 调用使用）。"""
     return DEFAULT_SYSTEM_PROMPT
