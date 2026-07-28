@@ -38,6 +38,11 @@
 - 如果图片 Provider 不支持视觉，会自动回退到具备图片能力的 Provider。
 - 调用失败时带自动重试与回退逻辑。
 
+### 角色扮演（Persona）
+- 内置「猫娘」和「梗百科」两种角色预设，替换系统提示词改变 Bot 回复风格。
+- 配置 `default_persona` 设置固定角色，或将指令 `-p` 临时切换。
+- 使用 `-l` 查看所有可用角色列表。
+
 ---
 
 ## 触发方式
@@ -49,12 +54,16 @@
   - 或 `/zssm 这段命令是干什么的？`，直接解释当前消息中的文本。
   - 或 `/zssm [图片]`，直接解释当前消息中图片的含义。
   - 或 `/zssm 什么是量子计算`，进行联网搜索并回答。
+  - `/zssm -l` — 查看所有可用角色。
+  - `/zssm -p catgirl 夸我一下` — 用猫娘风格回复。
+  - `/zssm -p meme-expert 解释一下这个梗` — 用梗百科风格回复。
 
 ### 关键词触发
 
 - 文本中包含关键字 `zssm`（忽略大小写、常见前缀、Reply/At 噪音）时自动触发：
   - `zssm 这条报错什么意思`
   - `@Bot zssm 请解释上面这段话`
+  - `zssm -p catgirl 夸夸我` — 关键词触发也支持 persona 参数
   - 若以 `/zssm` 开头则优先视为指令，不会重复触发关键词逻辑。
 - 该行为可通过配置项 `enable_keyword_zssm` 关闭。
 
@@ -80,6 +89,7 @@
 | `provider_id_text` | string | (空) | 文本/搜索模型使用的 Provider ID。留空则使用当前会话 Provider。 |
 | `provider_id_image` | string | (空) | 图片/视觉模型使用的 Provider ID。留空则自动寻找支持视觉的 Provider。 |
 | `search_mode` | string | `auto` | 联网搜索模式：auto / on / off。 |
+| `default_persona` | string | (空) | 默认角色。留空使用默认中文助理。可选：猫娘、梗百科。 |
 
 ---
 

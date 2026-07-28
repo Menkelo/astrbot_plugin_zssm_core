@@ -33,6 +33,7 @@ from .file_preview_utils import (
     build_text_exts_from_config,
     extract_file_preview_from_reply,
 )
+from .persona import list_personas, resolve_persona
 
 KEYWORD_ZSSM_ENABLE_KEY = "enable_keyword_zssm"
 FILE_PREVIEW_EXTS_KEY = "file_preview_exts"
@@ -40,6 +41,7 @@ FILE_PREVIEW_MAX_SIZE_KB_KEY = "file_preview_max_size_kb"
 SEARCH_MODE_KEY = "search_mode"  # auto / off / on
 PROVIDER_ID_TEXT_KEY = "provider_id_text"
 ZSSM_HANDLED_KEY = "zssm_handled"
+DEFAULT_PERSONA_KEY = "default_persona"
 
 DEFAULT_FILE_PREVIEW_EXTS = "txt,md,log,json,csv,ini,cfg,yml,yaml,py"
 DEFAULT_FILE_PREVIEW_MAX_SIZE_KB = 100
@@ -53,6 +55,8 @@ ZSSM_CONTENT_PATTERN = re.compile(r"^[\s/!！。\.、，\-]{0,10}zssm(?:\s+(.+))
 BRACKET_IMAGE_PATTERN = re.compile(r"[\[【](图片|image|img|文件|file)[\]】]", flags=re.I)
 MULTI_SPACE_PATTERN = re.compile(r"\s{2,}")
 EXPLICIT_SEARCH_PATTERN = re.compile(r"^(?:搜索|联网|联网搜索|search)\s*[:：]?\s*(.+)$", re.I)
+PERSONA_FLAG_PATTERN = re.compile(r"(?:^|\s)(?:--persona|-p)\s+(\S+)", re.I)
+PERSONA_LIST_PATTERN = re.compile(r"(?:^|\s)(?:--list-persona|-l)(?:\s|$)", re.I)
 
 
 @dataclass
@@ -62,6 +66,7 @@ class LLMPlan:
     cleanup_paths: List[str] = field(default_factory=list)
     is_search: bool = False
     concise_mode: bool = True  # True=100字逻辑；False=详细不限字数
+    persona_name: Optional[str] = None  # persona id，如 "catgirl"
 
 
 @dataclass
@@ -189,7 +194,26 @@ class ZssmExplain(Star):
         content = MULTI_SPACE_PATTERN.sub(" ", content).strip()
         return content
 
-    def _get_inline_content(self, event: AstrMessageEvent) -> str:
+    @staticmethod
+    def _parse_persona_from_inline(inline: str):
+        """解析 --persona/-p 和 --list-persona/-l 参数。
+        返回 (stripped_inline, persona_id, is_list)"""
+        if not isinstance(inline, str) or not inline:
+            return inline, None, False
+
+        if PERSONA_LIST_PATTERN.search(inline):
+            clean = PERSONA_LIST_PATTERN.sub(" ", inline)
+            clean = MULTI_SPACE_PATTERN.sub(" ", clean).strip()
+            return clean, None, True
+
+        m = PERSONA_FLAG_PATTERN.search(inline)
+        if m:
+            pid = m.group(1)
+            clean = PERSONA_FLAG_PATTERN.sub(" ", inline)
+            clean = MULTI_SPACE_PATTERN.sub(" ", clean).strip()
+            return clean, pid, False
+
+        return inline, None, False(self, event: AstrMessageEvent) -> str:
         chain = self._safe_get_chain(event)
         head = self._first_plain_head_text(chain)
         if head:
@@ -326,8 +350,15 @@ class ZssmExplain(Star):
         except Exception:
             return None
 
-    def _build_system_prompt(self) -> str:
-        return build_system_prompt()
+    def _build_system_prompt(self, persona_name: Optional[str] = None) -> str:
+        persona = None
+        if persona_name:
+            persona = resolve_persona(persona_name)
+        if persona is None:
+            default_pid = self._get_conf_str(DEFAULT_PERSONA_KEY, "")
+            if default_pid:
+                persona = resolve_persona(default_pid)
+        return build_system_prompt(persona)
 
     def _load_thinking_gif_base64(self) -> Optional[str]:
         try:
@@ -424,16 +455,52 @@ class ZssmExplain(Star):
 
         # 有 inline（zssm 问题 / zssm 问题+引用）=> 详细不限字数
         if inline:
-            prompt = inline
-            if q_text:
-                prompt += f"\n\n【上下文信息】\n{q_text}"
-            return LLMPlan(
-                user_prompt=prompt,
-                images=all_images,
-                cleanup_paths=cleanup_paths,
-                is_search=self._decide_search(inline),
-                concise_mode=False,
-            )
+            stripped, persona_id, is_list = self._parse_persona_from_inline(inline)
+
+            if is_list:
+                personas = list_personas()
+                lines = ["可用角色："]
+                for p in personas:
+                    lines.append(f"  {p.name}（{p.id}）：{p.description}")
+                return ReplyPlan(
+                    message="\n".join(lines),
+                    stop_event=True,
+                    cleanup_paths=cleanup_paths,
+                )
+
+            if persona_id and resolve_persona(persona_id) is None:
+                personas = list_personas()
+                ids = " / ".join(p.id for p in personas)
+                return ReplyPlan(
+                    message=f"未找到角色「{persona_id}」，可用角色：{ids}",
+                    stop_event=True,
+                    cleanup_paths=cleanup_paths,
+                )
+
+            if stripped:
+                prompt = stripped
+                if q_text:
+                    prompt += f"\n\n【上下文信息】\n{q_text}"
+                return LLMPlan(
+                    user_prompt=prompt,
+                    images=all_images,
+                    cleanup_paths=cleanup_paths,
+                    is_search=self._decide_search(stripped),
+                    concise_mode=False,
+                    persona_name=persona_id,
+                )
+
+            # inline 仅有 persona 标志，无实际内容 → 回退到引用模式
+            if q_text or all_images:
+                user_prompt = build_user_prompt(q_text, all_images, concise=True)
+                return LLMPlan(
+                    user_prompt=user_prompt,
+                    images=all_images,
+                    cleanup_paths=cleanup_paths,
+                    is_search=False,
+                    concise_mode=True,
+                    persona_name=persona_id,
+                )
 
         # 仅 zssm + 引用 => 100字逻辑
         if q_text or all_images:
@@ -466,6 +533,7 @@ class ZssmExplain(Star):
         images = plan.images
         is_search = plan.is_search
         _concise_mode = plan.concise_mode
+        persona_name = plan.persona_name
 
         try:
             provider = self.context.get_using_provider(umo=event.unified_msg_origin)
@@ -477,7 +545,7 @@ class ZssmExplain(Star):
             yield self._reply_text_result(event, "未检测到可用的大语言模型提供商，请先在 AstrBot 配置中启用。")
             return
 
-        system_prompt = self._build_system_prompt()
+        system_prompt = self._build_system_prompt(persona_name)
         image_urls = self._llm.filter_supported_images(images)
 
         try:
