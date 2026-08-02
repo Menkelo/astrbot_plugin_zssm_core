@@ -1,6 +1,6 @@
 name: astrbot_plugin_zssm_core
 display_name: Zssm(Core)
-desc: "[aiocqhttp]可直接zssm解释引用内容，或使用 zssm + 内容 进行联网搜索"
-version: 1.2.0
+desc: "[aiocqhttp]可直接zssm解释引用内容，或使用 zssm + 搜索指令 触发在线搜索"
+version: 1.3.0
 author: Menkelo
 repo: https://github.com/Menkelo/astrbot_plugin_zssm_core

@@ -16,9 +16,8 @@
 - 支持 Napcat/OneBot 仅提供 `message_id` 的场景，通过 `get_msg` 回溯原消息。
 
 ### 联网搜索
-- 使用「zssm + 内容」格式可进行联网搜索，例如 `zssm 搜索一下今天的天气`、`zssm search today's weather`。
-- 搜索后端优先级：读取 AstrBot 配置中的搜索 Key（Tavily / BoCha / Brave）→ 内置 Bing 搜索 → DuckDuckGo。
-- 若全部搜索源不可用，会明确提示配置搜索 Key 或检查网络，而不是交给模型空泛回答。
+- 使用「zssm + 内容」格式可触发在线搜索，例如 `zssm 搜索一下今天的天气`、`zssm search today's weather`。
+- 插件识别到在线搜索指令时，自动切换到视觉模型（`provider_id_image`）处理，由视觉模型自带的联网能力完成搜索并回答，插件自身不再执行搜索请求。
 - 如果同时回复了一条消息，被回复的内容将作为上下文信息一并发送给模型。
 
 ### QQ 群文件解释（含 PDF→Markdown）
@@ -36,7 +35,8 @@
   - 先展开所有节点，汇总文本与图片，作为「整段聊天记录」来解释。
 
 ### 多模型 / 多模态支持
-- `provider_id_text` 选择文本/搜索场景的 Provider，`provider_id_image` 选择图片/视觉场景的 Provider。
+- `provider_id_text` 选择纯文本场景的 Provider，`provider_id_image` 选择图片/视觉场景的 Provider。
+- 识别到在线搜索指令时，同样切换到视觉模型（`provider_id_image`）处理。
 - 如果图片 Provider 不支持视觉，会自动回退到具备图片能力的 Provider。
 - 调用失败时带自动重试与回退逻辑。
 
@@ -50,7 +50,7 @@
   - 最基本用法：`/zssm` + 回复消息，解释被回复的文本/图片/群文件/合并转发等。
   - 或 `/zssm 这段命令是干什么的？`，直接解释当前消息中的文本。
   - 或 `/zssm [图片]`，直接解释当前消息中图片的含义。
-  - 或 `/zssm 什么是量子计算`，进行联网搜索并回答。
+  - 或 `/zssm 搜索今天的天气`，触发在线搜索。
 
 ### 关键词触发
 
@@ -79,9 +79,8 @@
 | `llm_retry_times` | int | `2` | LLM 调用失败自动重试次数（含首次）。1=不重试；2=重试1次。 |
 | `file_preview_max_size_kb` | int | `100` | 群文件内容预览允许的最大文件大小（KB）。超过该大小仅展示元信息。 |
 | `file_preview_exts` | string | `txt,md,log,...` | 群文件内容预览的文本扩展名（逗号分隔）。 |
-| `provider_id_text` | string | (空) | 文本/搜索模型使用的 Provider ID。留空则使用当前会话 Provider。 |
-| `provider_id_image` | string | (空) | 图片/视觉模型使用的 Provider ID。留空则自动寻找支持视觉的 Provider。 |
-| `search_mode` | string | `auto` | 联网搜索模式：auto / on / off。 |
+| `provider_id_text` | string | (空) | 纯文本模型使用的 Provider ID。留空则使用当前会话 Provider。 |
+| `provider_id_image` | string | (空) | 图片/视觉模型使用的 Provider ID。留空则自动寻找支持视觉的 Provider；在线搜索指令也会切换到该模型。 |
 
 ---
 

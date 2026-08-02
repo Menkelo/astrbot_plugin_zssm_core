@@ -39,15 +39,15 @@ class TestPureUtils(unittest.TestCase):
         self.assertFalse(ZssmExplain._is_zssm_trigger("hello world"))
         self.assertFalse(ZssmExplain._is_zssm_trigger("zssmhello"))
 
-    def test_extract_search_query(self):
-        self.assertEqual(ZssmExplain._extract_search_query("搜索一下今天的天气"), "今天的天气")
-        self.assertEqual(ZssmExplain._extract_search_query("搜索：量子计算"), "量子计算")
-        self.assertEqual(ZssmExplain._extract_search_query("search today's weather"), "today's weather")
-        self.assertEqual(ZssmExplain._extract_search_query("联网搜索 北京天气"), "北京天气")
-        self.assertEqual(ZssmExplain._extract_search_query("什么是量子计算"), "")
-        self.assertEqual(
-            ZssmExplain._extract_search_query("搜索：\n量子计算\n第二行"), "量子计算\n第二行"
-        )
+    def test_decide_search(self):
+        self.assertTrue(ZssmExplain._decide_search("搜索一下今天的天气"))
+        self.assertTrue(ZssmExplain._decide_search("搜索：量子计算"))
+        self.assertTrue(ZssmExplain._decide_search("search today's weather"))
+        self.assertTrue(ZssmExplain._decide_search("联网搜索 北京天气"))
+        self.assertTrue(ZssmExplain._decide_search("帮我查一下上海到北京的高铁"))
+        self.assertTrue(ZssmExplain._decide_search("搜索\n今天天气"))
+        self.assertFalse(ZssmExplain._decide_search("什么是量子计算"))
+        self.assertFalse(ZssmExplain._decide_search(""))
 
     def test_build_text_exts(self):
         exts = build_text_exts_from_config("md, json, .py", ["txt"])
@@ -81,13 +81,6 @@ class TestPureUtils(unittest.TestCase):
         reply2 = Comp.Reply(message_str="Hello from message_str")
         text2, images2, from_forward2 = try_extract_from_reply_component(reply2)
         self.assertIsNone(text2)
-
-    def test_web_search_empty_query(self):
-        import asyncio
-        from astrbot_plugin_zssm_core.web_search import perform_web_search
-
-        self.assertIsNone(asyncio.run(perform_web_search("", provider_settings={})))
-        self.assertIsNone(asyncio.run(perform_web_search("   ", provider_settings={})))
 
 
 if __name__ == "__main__":

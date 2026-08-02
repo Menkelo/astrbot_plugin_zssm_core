@@ -33,18 +33,12 @@
     "description": "文本模型使用的 Provider ID",
     "type": "string",
     "_special": "select_provider",
-    "hint": "留空则使用当前会话 Provider。用于纯文本和搜索场景。"
+    "hint": "留空则使用当前会话 Provider。用于纯文本场景。"
   },
   "provider_id_image": {
     "description": "图片/视觉模型使用的 Provider ID",
     "type": "string",
     "_special": "select_provider",
-    "hint": "留空则自动寻找支持视觉的 Provider。常用于 GPT-4o / Gemini 等多模态模型。"
-  },
-  "search_mode": {
-    "description": "联网搜索模式",
-    "type": "string",
-    "default": "auto",
-    "options": ["自动", "关闭", "开启"]
+    "hint": "留空则自动寻找支持视觉的 Provider。常用于 GPT-4o / Gemini 等多模态模型，识别到在线搜索指令时也会切换到该模型处理（视觉模型自带联网能力）。"
   }
 }

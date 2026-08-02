@@ -121,11 +121,6 @@ class LLMClient:
 
         return cfg if cfg is not None else session_provider
 
-    def select_search_provider(self, *, session_provider: Any) -> Any:
-        """搜索使用文本 Provider；未配置回退会话 Provider。"""
-        cfg = self._get_provider_from_config(PROVIDER_ID_TEXT_KEY)
-        return cfg if cfg is not None else session_provider
-
     async def call_with_fallback(
         self,
         *,
