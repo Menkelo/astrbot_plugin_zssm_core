@@ -73,6 +73,31 @@ class TestPureUtils(unittest.TestCase):
         )
         self.assertEqual(f("无链接文本"), "无链接文本")
 
+    def test_demote_markdown(self):
+        d = ZssmExplain._demote_markdown_to_text
+        self.assertEqual(d("**2026鹰角嘉年华**（明日方舟相关活动）"), "2026鹰角嘉年华（明日方舟相关活动）")
+        self.assertEqual(
+            d("[[1]](https://www.neccsh.com/cecsh/exhibitioninfo/exhibitionlist.jspx)."),
+            "[1] https://www.neccsh.com/cecsh/exhibitioninfo/exhibitionlist.jspx.",
+        )
+        self.assertEqual(d("[说明](https://example.com/a)"), "说明（https://example.com/a）")
+        self.assertEqual(d("`inline code` 保留"), "inline code 保留")
+        self.assertEqual(d("~~删除线~~内容"), "删除线内容")
+        self.assertEqual(d("### 标题文字"), "标题文字")
+        self.assertEqual(
+            d("```python\nprint(1)\n```"),
+            "\nprint(1)\n",
+        )
+
+    def test_sanitize_combined(self):
+        n = ZssmExplain._normalize_link_spacing
+        d = ZssmExplain._demote_markdown_to_text
+        s = lambda t: d(n(t))
+        self.assertEqual(
+            s("**关键词**\n北京天气。[[1]](https://www.weather.com.cn/weather/101010100.shtml)[[2]](http://weather.cma.cn/web/weather/54511.html)"),
+            "关键词\n北京天气。[1] https://www.weather.com.cn/weather/101010100.shtml [2] http://weather.cma.cn/web/weather/54511.html",
+        )
+
     def test_build_text_exts(self):
         exts = build_text_exts_from_config("md, json, .py", ["txt"])
         self.assertIn(".txt", exts)

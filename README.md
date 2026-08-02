@@ -98,6 +98,9 @@
 - 系统提示词与用户提示词模板集中在 `prompt_utils.py`：
   - `DEFAULT_SYSTEM_PROMPT`：约束 LLM 输出结构，如「关键词行 + 总结 + **详细阐述**」。
   - `DEFAULT_TEXT_USER_PROMPT` / `DEFAULT_IMAGE_USER_PROMPT`：分别用于纯文本、图文场景。
+- 发送前会对 LLM 输出做格式清理，适配 QQ 等不支持 markdown 渲染的客户端：
+  - 去除 `**加粗**`、`*斜体*`、`~~删除线~~`、`inline code`、标题 `#` 与代码块围栏等标记。
+  - `[[1]](url)` 引用链接转为 `[1] url`，普通链接转为 `text（url）`，由客户端自动识别裸 URL 为可点击链接；相邻链接之间自动补空格，避免两条 URL 合并显示。
 
 ---
 
