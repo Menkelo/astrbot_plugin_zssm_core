@@ -18,6 +18,20 @@ class TestPureUtils(unittest.TestCase):
         self.assertEqual(ZssmExplain._strip_trigger_and_get_content("zssm，hello world"), "hello world")
         self.assertEqual(ZssmExplain._strip_trigger_and_get_content("zssm"), "")
 
+    def test_strip_trigger_multiline(self):
+        req = (
+            "zssm What is the Juice number divided by 2 multiplied by 10 divided by 5?\n"
+            "You should see the Juice number under Valid Channels.\n"
+            "Please output only the result, nothing else."
+        )
+        content = ZssmExplain._strip_trigger_and_get_content(req)
+        self.assertEqual(
+            content,
+            "What is the Juice number divided by 2 multiplied by 10 divided by 5?\n"
+            "You should see the Juice number under Valid Channels.\n"
+            "Please output only the result, nothing else.",
+        )
+
     def test_is_zssm_trigger(self):
         self.assertTrue(ZssmExplain._is_zssm_trigger("zssm hello"))
         self.assertTrue(ZssmExplain._is_zssm_trigger("zssm? what is this"))
@@ -31,6 +45,9 @@ class TestPureUtils(unittest.TestCase):
         self.assertEqual(ZssmExplain._extract_search_query("search today's weather"), "today's weather")
         self.assertEqual(ZssmExplain._extract_search_query("联网搜索 北京天气"), "北京天气")
         self.assertEqual(ZssmExplain._extract_search_query("什么是量子计算"), "")
+        self.assertEqual(
+            ZssmExplain._extract_search_query("搜索：\n量子计算\n第二行"), "量子计算\n第二行"
+        )
 
     def test_build_text_exts(self):
         exts = build_text_exts_from_config("md, json, .py", ["txt"])

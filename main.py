@@ -50,11 +50,11 @@ THINKING_GIF_PATH = os.path.join(os.path.dirname(__file__), "thinking.gif")
 
 ZSSM_TRIGGER_PATTERN = re.compile(r"^[\s/!！。\.、，\-]{0,10}zssm(?:[\s:：?？,，.。;；\-!！]+|$)", re.I)
 ZSSM_COMMAND_PATTERN = re.compile(r"^\s*/\s*zssm(?:\s|$)", re.I)
-ZSSM_CONTENT_PATTERN = re.compile(r"^[\s/!！。\.、，\-]{0,10}zssm(?:[\s:：?？,，.。;；\-!！]+\s*)?(.*)$", re.I)
+ZSSM_CONTENT_PATTERN = re.compile(r"^[\s/!！。\.、，\-]{0,10}zssm(?:[\s:：?？,，.。;；\-!！]+\s*)?([\s\S]*)$", re.I)
 BRACKET_IMAGE_PATTERN = re.compile(r"[\[【](图片|image|img|文件|file)[\]】]", flags=re.I)
 MULTI_SPACE_PATTERN = re.compile(r"\s{2,}")
 EXPLICIT_SEARCH_PATTERN = re.compile(
-    r"^(?:联网搜索|帮我搜索|帮我查|查一下|搜索|联网|search)\s*[:：]?\s*(?:一下|看看)?\s*(.+)$",
+    r"^(?:联网搜索|帮我搜索|帮我查|查一下|搜索|联网|search)\s*[:：]?\s*(?:一下|看看)?\s*([\s\S]+)$",
     re.I,
 )
 
