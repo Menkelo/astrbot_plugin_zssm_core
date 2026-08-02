@@ -96,7 +96,7 @@
 ## 提示词与输出格式
 
 - 系统提示词与用户提示词模板集中在 `prompt_utils.py`：
-  - `DEFAULT_SYSTEM_PROMPT`：约束 LLM 输出结构，如「关键词行 + 总结 + **详细阐述**」。
+  - `DEFAULT_SYSTEM_PROMPT`：约束 LLM 输出结构，如「关键词行 + 总结 + **详细阐述**」，并要求正文按 2~4 个小节分段、短句、总篇幅约 400 字内，适配手机聊天界面。
   - `DEFAULT_TEXT_USER_PROMPT` / `DEFAULT_IMAGE_USER_PROMPT`：分别用于纯文本、图文场景。
 - 发送前会对 LLM 输出做格式清理，适配 QQ 等不支持 markdown 渲染的客户端：
   - 去除 `**加粗**`、`*斜体*`、`~~删除线~~`、`inline code`、标题 `#` 与代码块围栏等标记。

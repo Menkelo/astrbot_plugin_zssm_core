@@ -124,6 +124,7 @@ class ZssmExplain(Star):
         t = MARKDOWN_INLINE_CODE_PATTERN.sub(r"\1", t)
         t = MARKDOWN_ITALIC_PATTERN.sub(r"\1", t)
         t = MARKDOWN_HEADING_PATTERN.sub(r"\1", t)
+        t = re.sub(r"\n{3,}", "\n\n", t)
         return t
 
     def _get_conf_str(self, key: str, default: str) -> str:
