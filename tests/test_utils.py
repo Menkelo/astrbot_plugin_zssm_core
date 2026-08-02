@@ -49,6 +49,30 @@ class TestPureUtils(unittest.TestCase):
         self.assertFalse(ZssmExplain._decide_search("什么是量子计算"))
         self.assertFalse(ZssmExplain._decide_search(""))
 
+    def test_normalize_link_spacing(self):
+        f = ZssmExplain._normalize_link_spacing
+        self.assertEqual(
+            f("[[1]](https://a.com/x)[[2]](https://b.com/y)"),
+            "[[1]](https://a.com/x) [[2]](https://b.com/y)",
+        )
+        self.assertEqual(
+            f("[[1]](https://www.weather.com.cn/weather/101010100.shtml)[[2]](http://weather.cma.cn/web/weather/54511.html)"),
+            "[[1]](https://www.weather.com.cn/weather/101010100.shtml) [[2]](http://weather.cma.cn/web/weather/54511.html)",
+        )
+        self.assertEqual(
+            f("见 [[1]](https://a.com/x) 和 [[2]](https://b.com/y)"),
+            "见 [[1]](https://a.com/x) 和 [[2]](https://b.com/y)",
+        )
+        self.assertEqual(
+            f("[说明](https://a.com/x)[2](https://b.com/y)"),
+            "[说明](https://a.com/x) [2](https://b.com/y)",
+        )
+        self.assertEqual(
+            f("[[1]](https://a.com/x)[[2]](https://b.com/y)[[3]](https://c.com/z)"),
+            "[[1]](https://a.com/x) [[2]](https://b.com/y) [[3]](https://c.com/z)",
+        )
+        self.assertEqual(f("无链接文本"), "无链接文本")
+
     def test_build_text_exts(self):
         exts = build_text_exts_from_config("md, json, .py", ["txt"])
         self.assertIn(".txt", exts)

@@ -54,6 +54,8 @@ EXPLICIT_SEARCH_PATTERN = re.compile(
     r"^(?:联网搜索|帮我搜索|帮我查|查一下|搜索|联网|search)\s*[:：]?\s*(?:一下|看看)?\s*([\s\S]+)$",
     re.I,
 )
+# 相邻 markdown 链接之间补空格，避免 QQ 等客户端把紧邻的两条 URL 合并识别
+MARKDOWN_LINK_JOIN_PATTERN = re.compile(r"\]\((https?://[^)\s]+)\)(?=\[)", re.I)
 
 
 @dataclass
@@ -89,6 +91,13 @@ class ZssmExplain(Star):
     def _reply_text_result(self, event: AstrMessageEvent, text: str):
         safe_text = str(text).strip() if text is not None else ""
         return event.plain_result(safe_text)
+
+    @staticmethod
+    def _normalize_link_spacing(text: str) -> str:
+        """在相邻的 markdown 链接之间补一个空格，避免 QQ 等客户端把紧邻的两条 URL 合并识别。"""
+        if not isinstance(text, str) or not text:
+            return text
+        return MARKDOWN_LINK_JOIN_PATTERN.sub(r"](\1) ", text)
 
     def _get_conf_str(self, key: str, default: str) -> str:
         try:
@@ -506,6 +515,8 @@ class ZssmExplain(Star):
                 pass
             if not reply_text:
                 reply_text = self._llm.pick_llm_text(llm_resp)
+
+            reply_text = self._normalize_link_spacing(reply_text)
 
             elapsed = time.perf_counter() - start_ts
             out = reply_text
