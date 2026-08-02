@@ -89,13 +89,20 @@ class TestPureUtils(unittest.TestCase):
             "\nprint(1)\n",
         )
 
+    def test_demote_keeps_section_headers(self):
+        d = ZssmExplain._demote_markdown_to_text
+        self.assertEqual(
+            d("**关键词**\n古诗 | 静夜思 | 李白\n\n**详细阐述**\n这是正文。"),
+            "**关键词**\n古诗 | 静夜思 | 李白\n\n**详细阐述**\n这是正文。",
+        )
+
     def test_sanitize_combined(self):
         n = ZssmExplain._normalize_link_spacing
         d = ZssmExplain._demote_markdown_to_text
         s = lambda t: d(n(t))
         self.assertEqual(
             s("**关键词**\n北京天气。[[1]](https://www.weather.com.cn/weather/101010100.shtml)[[2]](http://weather.cma.cn/web/weather/54511.html)"),
-            "关键词\n北京天气。[1] https://www.weather.com.cn/weather/101010100.shtml [2] http://weather.cma.cn/web/weather/54511.html",
+            "**关键词**\n北京天气。[1] https://www.weather.com.cn/weather/101010100.shtml [2] http://weather.cma.cn/web/weather/54511.html",
         )
 
     def test_build_text_exts(self):

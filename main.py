@@ -117,6 +117,8 @@ class ZssmExplain(Star):
             return text
         t = text
         t = MARKDOWN_BLOCK_CODE_PATTERN.sub(lambda m: "\n" + m.group(1).strip("\n") + "\n", t)
+        # 保留固定标题 **关键词** / **详细阐述** 的加粗标记，其余 ** 标记照常剥离
+        t = t.replace("**关键词**", "\x00ZSSM_KEEP_KW\x00").replace("**详细阐述**", "\x00ZSSM_KEEP_EL\x00")
         t = MARKDOWN_REF_LINK_PATTERN.sub(lambda m: f"[{m.group(1)}] {m.group(2)}", t)
         t = MARKDOWN_LINK_PATTERN.sub(lambda m: f"{m.group(1)}（{m.group(2)}）", t)
         t = MARKDOWN_BOLD_PATTERN.sub(r"\1", t)
@@ -124,6 +126,7 @@ class ZssmExplain(Star):
         t = MARKDOWN_INLINE_CODE_PATTERN.sub(r"\1", t)
         t = MARKDOWN_ITALIC_PATTERN.sub(r"\1", t)
         t = MARKDOWN_HEADING_PATTERN.sub(r"\1", t)
+        t = t.replace("\x00ZSSM_KEEP_KW\x00", "**关键词**").replace("\x00ZSSM_KEEP_EL\x00", "**详细阐述**")
         t = re.sub(r"\n{3,}", "\n\n", t)
         return t
 
