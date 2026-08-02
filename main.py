@@ -33,6 +33,7 @@ from .file_preview_utils import (
     build_text_exts_from_config,
     extract_file_preview_from_reply,
 )
+from .web_search import perform_web_search
 
 KEYWORD_ZSSM_ENABLE_KEY = "enable_keyword_zssm"
 FILE_PREVIEW_EXTS_KEY = "file_preview_exts"
@@ -47,12 +48,15 @@ DEFAULT_SEARCH_MODE = "auto"
 
 THINKING_GIF_PATH = os.path.join(os.path.dirname(__file__), "thinking.gif")
 
-ZSSM_TRIGGER_PATTERN = re.compile(r"^[\s/!！。\.、，\-]{0,10}zssm(?:\s|$)", re.I)
+ZSSM_TRIGGER_PATTERN = re.compile(r"^[\s/!！。\.、，\-]{0,10}zssm(?:[\s:：?？,，.。;；\-!！]+|$)", re.I)
 ZSSM_COMMAND_PATTERN = re.compile(r"^\s*/\s*zssm(?:\s|$)", re.I)
-ZSSM_CONTENT_PATTERN = re.compile(r"^[\s/!！。\.、，\-]{0,10}zssm(?:\s+(.+))?$", re.I)
+ZSSM_CONTENT_PATTERN = re.compile(r"^[\s/!！。\.、，\-]{0,10}zssm(?:[\s:：?？,，.。;；\-!！]+\s*)?(.*)$", re.I)
 BRACKET_IMAGE_PATTERN = re.compile(r"[\[【](图片|image|img|文件|file)[\]】]", flags=re.I)
 MULTI_SPACE_PATTERN = re.compile(r"\s{2,}")
-EXPLICIT_SEARCH_PATTERN = re.compile(r"^(?:搜索|联网|联网搜索|search)\s*[:：]?\s*(.+)$", re.I)
+EXPLICIT_SEARCH_PATTERN = re.compile(
+    r"^(?:联网搜索|帮我搜索|帮我查|查一下|搜索|联网|search)\s*[:：]?\s*(?:一下|看看)?\s*(.+)$",
+    re.I,
+)
 
 
 @dataclass
@@ -61,6 +65,7 @@ class LLMPlan:
     images: List[str] = field(default_factory=list)
     cleanup_paths: List[str] = field(default_factory=list)
     is_search: bool = False
+    search_query: str = ""  # 联网搜索的查询词（is_search=True 时有效）
     concise_mode: bool = True  # True=100字逻辑；False=详细不限字数
 
 
@@ -231,6 +236,29 @@ class ZssmExplain(Star):
             return True
         # auto：仅显式搜索词触发
         return bool(EXPLICIT_SEARCH_PATTERN.match(inline))
+
+    @staticmethod
+    def _extract_search_query(inline: str) -> str:
+        """从 inline 中提取真正的搜索查询词（去掉“搜索/查一下”等前缀）。"""
+        if not isinstance(inline, str):
+            return ""
+        m = EXPLICIT_SEARCH_PATTERN.match(inline.strip())
+        if not m:
+            return ""
+        q = (m.group(1) or "").strip()
+        return q[:300]
+
+    def _get_provider_settings(self, event: AstrMessageEvent) -> Dict[str, Any]:
+        """读取当前会话的 AstrBot provider_settings，用于获取搜索 Key。"""
+        try:
+            cfg = self.context.get_config(umo=event.unified_msg_origin)
+            if isinstance(cfg, dict):
+                ps = cfg.get("provider_settings")
+                if isinstance(ps, dict):
+                    return ps
+        except Exception as e:
+            logger.debug(f"zssm_core: get provider_settings failed: {e}")
+        return {}
 
     async def _resolve_images_for_llm(self, event: AstrMessageEvent, images: List[str]) -> List[str]:
         def _norm(x: object) -> Optional[str]:
@@ -425,13 +453,16 @@ class ZssmExplain(Star):
         # 有 inline（zssm 问题 / zssm 问题+引用）=> 详细不限字数
         if inline:
             prompt = inline
+            is_search = self._decide_search(inline)
+            search_query = self._extract_search_query(inline) if is_search else ""
             if q_text:
                 prompt += f"\n\n【上下文信息】\n{q_text}"
             return LLMPlan(
                 user_prompt=prompt,
                 images=all_images,
                 cleanup_paths=cleanup_paths,
-                is_search=self._decide_search(inline),
+                is_search=is_search,
+                search_query=search_query,
                 concise_mode=False,
             )
 
@@ -479,6 +510,34 @@ class ZssmExplain(Star):
 
         system_prompt = self._build_system_prompt()
         image_urls = self._llm.filter_supported_images(images)
+
+        # 联网搜索：真正执行搜索，并把结果作为上下文交给 LLM，
+        # 避免 LLM 因无实时信息而回答“无法联网”。
+        if is_search:
+            search_query = (getattr(plan, "search_query", "") or "").strip()
+            if not search_query:
+                search_query = user_prompt.strip()
+            provider_settings = self._get_provider_settings(event)
+            results_text = await perform_web_search(
+                search_query,
+                provider_settings=provider_settings,
+            )
+            if not results_text:
+                yield self._reply_text_result(
+                    event,
+                    "联网搜索失败：未获取到搜索结果。请检查网络连接，或在 AstrBot 配置中填写搜索 Key（Tavily / BoCha / Brave）后重试。",
+                )
+                try:
+                    event.stop_event()
+                except Exception:
+                    pass
+                return
+            user_prompt = (
+                "请基于以下【联网搜索结果】回答用户的问题。"
+                "若搜索结果不足以回答，请如实说明，不要编造。\n"
+                f"用户问题：{search_query}\n\n"
+                f"【联网搜索结果】\n{results_text}"
+            )
 
         try:
             await self._send_processing_image_notice(event)

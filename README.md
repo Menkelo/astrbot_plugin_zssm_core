@@ -16,7 +16,9 @@
 - 支持 Napcat/OneBot 仅提供 `message_id` 的场景，通过 `get_msg` 回溯原消息。
 
 ### 联网搜索
-- 使用「zssm + 内容」格式可进行联网搜索（需配置 Search Provider）。
+- 使用「zssm + 内容」格式可进行联网搜索，例如 `zssm 搜索一下今天的天气`、`zssm search today's weather`。
+- 搜索后端优先级：读取 AstrBot 配置中的搜索 Key（Tavily / BoCha / Brave）→ 内置 Bing 搜索 → DuckDuckGo。
+- 若全部搜索源不可用，会明确提示配置搜索 Key 或检查网络，而不是交给模型空泛回答。
 - 如果同时回复了一条消息，被回复的内容将作为上下文信息一并发送给模型。
 
 ### QQ 群文件解释（含 PDF→Markdown）

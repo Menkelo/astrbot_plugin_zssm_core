@@ -221,7 +221,7 @@ def _format_json_share(data: Dict[str, Any]) -> str:
 
 
 def try_extract_from_reply_component(reply_comp: object) -> Tuple[Optional[str], List[str], bool]:
-    for attr in ("message", "origin", "content"):
+    for attr in ("chain", "message", "origin", "content"):
         payload = getattr(reply_comp, attr, None)
         if isinstance(payload, list):
             text, images = extract_text_and_images_from_chain(payload)
@@ -527,6 +527,14 @@ async def extract_quoted_payload(event: AstrMessageEvent) -> Tuple[Optional[str]
     text, images, from_forward = try_extract_from_reply_component(reply_comp)
     if text or images:
         return (text, images, from_forward)
+
+    for attr in ("message_str", "text"):
+        try:
+            v = getattr(reply_comp, attr, None)
+            if isinstance(v, str) and v.strip():
+                return (v.strip(), [], False)
+        except Exception:
+            continue
 
     reply_id = get_reply_message_id(reply_comp)
     if reply_id:
